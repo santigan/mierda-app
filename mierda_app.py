@@ -182,17 +182,26 @@ def index():
             ultima_fecha = None
             if stats.get('mensajes'):
                 for mensaje in reversed(stats['mensajes']):
-                    # Extraer la fecha del formato [dd/mm/yy, HH:MM:SS]
                     match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2})\]', mensaje)
                     if match:
                         fecha_str = match.group(1)
-                        # Convertir a formato más amigable
                         try:
                             fecha = datetime.strptime(fecha_str, '%d/%m/%y, %H:%M:%S')
                             ultima_fecha = fecha.strftime('%d/%m/%Y %H:%M')
                             break
                         except ValueError:
                             continue
+
+            # Crear el diccionario de stats
+            stats_data = {
+                'total_mierdas': stats['total_mierdas'],
+                'dias': stats['dias'],
+                'promedio': stats['promedio'],
+                'cagadores_supremos': df.iloc[0]['Usuario'],
+                'cantidad_suprema': int(df.iloc[0]['Cantidad']),
+                'estrenidos': df.iloc[-1]['Usuario'],
+                'cantidad_minima': int(df.iloc[-1]['Cantidad'])
+            }
 
             return render_template('index.html',
                                 stats=stats_data,
@@ -218,6 +227,12 @@ def index():
         print(traceback.format_exc())
         flash(f'Error al cargar los datos: {str(e)}')
         return render_template('index.html',
+                             stats=None,
+                             tabla=None,
+                             todos_mensajes=None,
+                             mensajes_validez={},
+                             usuarios=[],
+                             cantidades=[],
                              ultima_fecha='Error al cargar fecha')
 
 if __name__ == '__main__':
