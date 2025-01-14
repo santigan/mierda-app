@@ -190,12 +190,16 @@
                             if (fecha > maxDate) maxDate = fecha;
                         });
 
+                        // Agregar un día más a la fecha máxima
+                        const maxDatePlusOne = new Date(maxDate);
+                        maxDatePlusOne.setDate(maxDatePlusOne.getDate() + 1);
+
                         // Calcular fecha 7 días antes
                         const minDate = new Date(maxDate);
                         minDate.setDate(minDate.getDate() - 7);
 
                         // Formatear fechas para input type="date"
-                        document.getElementById('fecha-hasta').value = maxDate.toISOString().split('T')[0];
+                        document.getElementById('fecha-hasta').value = maxDatePlusOne.toISOString().split('T')[0];
                         document.getElementById('fecha-desde').value = minDate.toISOString().split('T')[0];
                     }
                 }
