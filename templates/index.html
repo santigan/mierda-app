@@ -270,6 +270,19 @@
                 background: var(--primary-color);
                 color: white;
             }
+
+            #grafico-evolucion {
+                width: 100%;
+                min-height: 400px;
+                margin-bottom: 30px;
+            }
+
+            @media (max-width: 600px) {
+                #grafico-evolucion {
+                    min-height: 600px;
+                    margin-bottom: 50px;
+                }
+            }
         </style>
 
         <script>
@@ -320,43 +333,57 @@
                 }));
 
                 const layout = {
-                    title: `Evolución ${tipo === 'diaria' ? 'Diaria' : 'Semanal'} Acumulada de 💩`,
-                    titlefont: {
-                        size: 24,
-                        family: 'Poppins'
+                    title: {
+                        text: `Evolución ${tipo === 'diaria' ? 'Diaria' : 'Semanal'} Acumulada de 💩`,
+                        font: {
+                            size: window.innerWidth < 600 ? 18 : 24,
+                            family: 'Poppins'
+                        }
                     },
                     xaxis: {
                         title: tipo === 'diaria' ? 'Fecha' : 'Semana',
                         titlefont: {
-                            size: 16,
+                            size: window.innerWidth < 600 ? 12 : 16,
                             family: 'Poppins'
                         },
-                        tickangle: tipo === 'semanal' ? 0 : -45,
-                        automargin: true
+                        tickangle: -45,
+                        automargin: true,
+                        tickfont: {
+                            size: window.innerWidth < 600 ? 8 : 10
+                        }
                     },
                     yaxis: {
-                        title: 'Cantidad Acumulada',
+                        title: 'Cantidad',
                         titlefont: {
-                            size: 16,
+                            size: window.innerWidth < 600 ? 12 : 16,
                             family: 'Poppins'
-                        }
+                        },
+                        tickfont: {
+                            size: window.innerWidth < 600 ? 10 : 12
+                        },
+                        automargin: true
                     },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     margin: {
-                        l: 50,
-                        r: 50,
-                        t: 80,
-                        b: 120
+                        l: window.innerWidth < 600 ? 40 : 50,
+                        r: window.innerWidth < 600 ? 15 : 20,
+                        t: window.innerWidth < 600 ? 60 : 80,
+                        b: window.innerWidth < 600 ? 200 : 150  // Margen inferior más grande en móviles
                     },
                     showlegend: true,
                     legend: {
                         orientation: 'h',
                         yanchor: 'bottom',
-                        y: -0.5,
+                        y: window.innerWidth < 600 ? -1.2 : -0.7,  // Leyenda más abajo en móviles
                         xanchor: 'center',
-                        x: 0.5
-                    }
+                        x: 0.5,
+                        font: {
+                            size: window.innerWidth < 600 ? 10 : 12
+                        }
+                    },
+                    height: window.innerWidth < 600 ? 600 : 400,  // Gráfico más alto en móviles
+                    width: window.innerWidth < 600 ? window.innerWidth - 20 : null  // Ajuste de ancho en móviles
                 };
 
                 Plotly.newPlot('grafico-evolucion', traces, layout, {
@@ -364,6 +391,12 @@
                     displayModeBar: false
                 });
             }
+
+            // Asegurarse de que el gráfico se actualice cuando se gira el dispositivo
+            window.addEventListener('resize', function() {
+                const tipoActual = document.querySelector('.selector-vista button.active').textContent.toLowerCase().includes('diaria') ? 'diaria' : 'semanal';
+                mostrarEvolucion(tipoActual);
+            });
 
             // Mostrar vista diaria por defecto al cargar
             document.addEventListener('DOMContentLoaded', function() {
