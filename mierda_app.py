@@ -71,13 +71,13 @@ def procesar_archivo_chat(contenido):
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        flash('No se seleccionó ningún archivo')
+        flash('No se seleccionó ningún archivo', 'error')
         return redirect(url_for('index'))
     
     file = request.files['file']
     
     if file.filename == '':
-        flash('No se seleccionó ningún archivo')
+        flash('No se seleccionó ningún archivo', 'error')
         return redirect(url_for('index'))
     
     try:
@@ -121,7 +121,7 @@ def upload_file():
         print(f"Nuevos datos insertados con ID: {result.inserted_id}")
         
         print("--- FIN PROCESO DE UPLOAD ---\n")
-        flash('Archivo subido y procesado correctamente')
+        flash('¡Archivo subido y procesado correctamente! 🎉', 'success')
         
         # Forzar recarga de la página sin caché
         response = redirect(url_for('index'))
@@ -134,7 +134,7 @@ def upload_file():
         print(f"Error en upload: {e}")
         import traceback
         print(traceback.format_exc())
-        flash(f'Error al procesar el archivo: {str(e)}')
+        flash(f'Error al procesar el archivo: {str(e)}', 'error')
         return redirect(url_for('index'))
 
 @app.route('/')
