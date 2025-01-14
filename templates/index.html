@@ -304,6 +304,10 @@
                     name: usuario,
                     x: datos.map(d => tipo === 'diaria' ? d.fecha : d.semana),
                     y: datos.map(d => d.cantidad),
+                    text: tipo === 'semanal' ? datos.map(d => `Inicio: ${d.fecha_inicio}`) : undefined,
+                    hovertemplate: tipo === 'semanal' ? 
+                        '%{text}<br>Cantidad: %{y}<extra></extra>' : 
+                        'Fecha: %{x}<br>Cantidad: %{y}<extra></extra>',
                     type: 'scatter',
                     mode: 'lines+markers',
                     line: {
@@ -327,16 +331,8 @@
                             size: 16,
                             family: 'Poppins'
                         },
-                        tickangle: -45,
-                        automargin: true,
-                        // Asegurar que solo se muestren las fechas con datos
-                        tickmode: 'array',
-                        ticktext: tipo === 'diaria' 
-                            ? Object.values(datos)[0].map(d => d.fecha)
-                            : Object.values(datos)[0].map(d => d.semana),
-                        tickvals: tipo === 'diaria'
-                            ? Object.values(datos)[0].map(d => d.fecha)
-                            : Object.values(datos)[0].map(d => d.semana)
+                        tickangle: tipo === 'semanal' ? 0 : -45,
+                        automargin: true
                     },
                     yaxis: {
                         title: 'Cantidad Acumulada',

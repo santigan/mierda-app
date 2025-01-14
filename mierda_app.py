@@ -129,31 +129,34 @@ def line_filter(lines):
     return [line.strip() for line in lines if line.strip() and re.match(r'\[\d{1,2}/\d{1,2}/\d{2,4}', line)]
 
 def procesar_datos_evolucion(mensajes, mensajes_validez):
-    # Crear diccionario para almacenar datos por usuario y fecha
     datos_diarios = {}
     datos_semanales = {}
     
-    # Encontrar la primera y última fecha con mensajes
+    # Encontrar la primera fecha con mensajes válidos
     primera_fecha = None
     ultima_fecha = None
     
+    # Primero encontramos la primera y última fecha
     for mensaje in mensajes:
-        if mensajes_validez.get(mensaje, False):  # Solo mensajes válidos
+        if mensajes_validez.get(mensaje, False):
             match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2}),\s*\d{1,2}:\d{2}:\d{2}\]\s*(.*?):\s*💩', mensaje)
             if match:
                 fecha_str = match.group(1)
-                usuario = match.group(2).strip()
-                
-                # Convertir fecha
                 fecha = datetime.strptime(fecha_str, '%d/%m/%y')
                 
-                # Actualizar primera y última fecha
                 if primera_fecha is None or fecha < primera_fecha:
                     primera_fecha = fecha
                 if ultima_fecha is None or fecha > ultima_fecha:
                     ultima_fecha = fecha
-                
-                semana = fecha.strftime('%Y-%V')  # Año-NumeroSemana
+    
+    # Inicializar estructuras por usuario
+    for mensaje in mensajes:
+        if mensajes_validez.get(mensaje, False):
+            match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2}),\s*\d{1,2}:\d{2}:\d{2}\]\s*(.*?):\s*💩', mensaje)
+            if match:
+                fecha_str = match.group(1)
+                usuario = match.group(2).strip()
+                fecha = datetime.strptime(fecha_str, '%d/%m/%y')
                 
                 # Inicializar estructuras si no existen
                 if usuario not in datos_diarios:
@@ -161,20 +164,25 @@ def procesar_datos_evolucion(mensajes, mensajes_validez):
                 if usuario not in datos_semanales:
                     datos_semanales[usuario] = {}
                 
-                # Incrementar contadores
-                datos_diarios[usuario][fecha.strftime('%Y-%m-%d')] = datos_diarios[usuario].get(fecha.strftime('%Y-%m-%d'), 0) + 1
-                datos_semanales[usuario][semana] = datos_semanales[usuario].get(semana, 0) + 1
+                # Calcular número de semana desde el inicio
+                dias_desde_inicio = (fecha - primera_fecha).days
+                numero_semana = (dias_desde_inicio // 7) + 1
+                
+                # Guardar datos diarios y semanales
+                fecha_str = fecha.strftime('%Y-%m-%d')
+                datos_diarios[usuario][fecha_str] = datos_diarios[usuario].get(fecha_str, 0) + 1
+                datos_semanales[usuario][numero_semana] = datos_semanales[usuario].get(numero_semana, 0) + 1
     
-    # Asegurarse de que todas las fechas entre la primera y última estén incluidas
+    # Procesar datos acumulados
+    datos_acumulados_diarios = {}
+    datos_acumulados_semanales = {}
+    
+    # Procesar datos diarios
     fechas_completas = []
     fecha_actual = primera_fecha
     while fecha_actual <= ultima_fecha:
         fechas_completas.append(fecha_actual.strftime('%Y-%m-%d'))
         fecha_actual += timedelta(days=1)
-    
-    # Convertir a formato acumulado con todas las fechas
-    datos_acumulados_diarios = {}
-    datos_acumulados_semanales = {}
     
     for usuario in datos_diarios:
         datos_acumulados_diarios[usuario] = []
@@ -186,22 +194,18 @@ def procesar_datos_evolucion(mensajes, mensajes_validez):
                 'cantidad': acumulado
             })
     
-    # Procesar semanas correctamente
+    # Procesar datos semanales
+    total_semanas = ((ultima_fecha - primera_fecha).days // 7) + 1
+    
     for usuario in datos_semanales:
         datos_acumulados_semanales[usuario] = []
         acumulado = 0
-        
-        # Ordenar las semanas cronológicamente
-        semanas_ordenadas = sorted(datos_semanales[usuario].keys())
-        
-        for semana in semanas_ordenadas:
-            acumulado += datos_semanales[usuario][semana]
-            # Convertir el formato de semana a una fecha legible
-            año, num_semana = semana.split('-')
-            # Crear una fecha para el lunes de esa semana
-            fecha_semana = datetime.strptime(f'{año}-W{num_semana}-1', '%Y-W%W-%w')
+        for semana in range(1, total_semanas + 1):
+            acumulado += datos_semanales[usuario].get(semana, 0)
+            fecha_semana = primera_fecha + timedelta(days=(semana-1)*7)
             datos_acumulados_semanales[usuario].append({
-                'semana': fecha_semana.strftime('%d/%m/%Y'),  # Formato más legible
+                'semana': f'Semana {semana}',
+                'fecha_inicio': fecha_semana.strftime('%d/%m/%Y'),
                 'cantidad': acumulado
             })
     
