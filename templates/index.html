@@ -273,10 +273,18 @@
         </style>
 
         <script>
-            // Colores para cada usuario
+            // Nueva paleta de colores más distintiva
             const colores = [
-                '#8d6e63', '#795548', '#6d4c41', '#5d4037', '#4e342e',
-                '#3e2723', '#a1887f', '#90a4ae', '#78909c', '#607d8b'
+                '#FF6B6B',  // Rojo coral
+                '#4ECDC4',  // Turquesa
+                '#45B7D1',  // Azul cielo
+                '#96CEB4',  // Verde menta
+                '#FFEEAD',  // Amarillo pastel
+                '#D4A5A5',  // Rosa antiguo
+                '#9B5DE5',  // Púrpura
+                '#F15BB5',  // Rosa fuerte
+                '#00BBF9',  // Azul brillante
+                '#00F5D4'   // Verde agua
             ];
 
             function mostrarEvolucion(tipo) {
@@ -666,6 +674,16 @@
             margin: 10px 0 20px;
             font-style: italic;
         }
+
+        .data td.ultima-semana {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        /* Si el valor es +0, lo mostramos en gris */
+        .data td.ultima-semana:contains("+0") {
+            color: #999;
+        }
     </style>
 
     <script>
@@ -736,6 +754,11 @@
                 });
             {% endif %}
         });
+
+        // Agregar soporte para el selector :contains
+        jQuery.expr[':'].contains = function(a, i, m) {
+            return jQuery(a).text().indexOf(m[3]) >= 0;
+        };
     </script>
 </body>
 </html>
