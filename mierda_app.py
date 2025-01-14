@@ -116,15 +116,20 @@ def upload_file():
         if df.empty:
             raise ValueError("No se encontraron datos para procesar")
         
+        # Calcular el promedio general
+        dias_totales = len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido)))
+        num_participantes = len(df)
+        promedio_general = round(df['Cantidad'].sum() / (dias_totales * num_participantes), 2)
+        
         # Preparar datos nuevos
         stats_data = {
             'fecha_actualizacion': datetime.now(),
             'total_mierdas': int(df['Cantidad'].sum()),
-            'dias': len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido))),
+            'dias': dias_totales,
             'promedio': promedio_general,
             'datos_df': df.to_dict('records'),
             'mensajes': todos_mensajes,
-            'mensajes_validez': mensajes_validez,  # Guardar la validez de los mensajes
+            'mensajes_validez': mensajes_validez,
             'tabla_html': tabla_html,
             'contenido_original': contenido
         }
@@ -143,7 +148,7 @@ def upload_file():
         print(f"Nuevos datos insertados con ID: {result.inserted_id}")
         
         print("--- FIN PROCESO DE UPLOAD ---\n")
-        flash('¡Archivo subido y procesado correctamente! 🎉', 'success')
+        flash('Archivo subido y procesado correctamente', 'success')
         
         # Forzar recarga de la página sin caché
         response = redirect(url_for('index'))
