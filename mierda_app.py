@@ -124,27 +124,36 @@ def index():
     try:
         # Obtener estadísticas de MongoDB
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
+        print("Datos recuperados de MongoDB:", stats is not None)  # Debug
         
         if stats:
             # Convertir datos a DataFrame
             df = pd.DataFrame(stats['datos_df'])
+            print("DataFrame creado con éxito")  # Debug
+            print("Columnas:", df.columns.tolist())  # Debug
+            print("Número de filas:", len(df))  # Debug
             
             # Preparar datos para el template
+            datos_stats = {
+                'total_mierdas': stats['total_mierdas'],
+                'dias': stats['dias'],
+                'promedio': stats['promedio'],
+                'cagadores_supremos': df.iloc[0]['Usuario'] if not df.empty else "N/A",
+                'cantidad_suprema': int(df.iloc[0]['Cantidad']) if not df.empty else 0,
+                'estrenidos': df.iloc[-1]['Usuario'] if not df.empty else "N/A",
+                'cantidad_minima': int(df.iloc[-1]['Cantidad']) if not df.empty else 0
+            }
+            
+            print("Datos preparados para el template:", datos_stats)  # Debug
+            
             return render_template('index.html',
-                                stats={
-                                    'total_mierdas': stats['total_mierdas'],
-                                    'dias': stats['dias'],
-                                    'promedio': stats['promedio'],
-                                    'cagadores_supremos': df.iloc[0:1]['Usuario'].tolist(),
-                                    'cantidad_suprema': int(df.iloc[0:1]['Cantidad'].values[0]),
-                                    'estrenidos': df.iloc[-1:]['Usuario'].tolist(),
-                                    'cantidad_minima': int(df.iloc[-1:]['Cantidad'].values[0])
-                                },
-                                tabla=df.to_html(classes='data', border=1),
-                                todos_mensajes=stats['mensajes'],
-                                usuarios=df['Usuario'].tolist(),
-                                cantidades=df['Cantidad'].tolist())
+                                stats=datos_stats,
+                                tabla=df.to_html(classes='data', border=1) if not df.empty else None,
+                                todos_mensajes=stats.get('mensajes', []),
+                                usuarios=df['Usuario'].tolist() if not df.empty else [],
+                                cantidades=df['Cantidad'].tolist() if not df.empty else [])
         else:
+            print("No se encontraron datos en MongoDB")  # Debug
             return render_template('index.html', 
                                 stats=None,
                                 tabla=None,
@@ -153,9 +162,16 @@ def index():
                                 cantidades=[])
             
     except Exception as e:
-        print(f"Error en index: {e}")
+        print(f"Error en index: {e}")  # Debug
+        import traceback
+        print(traceback.format_exc())  # Debug detallado
         flash(f'Error al cargar los datos: {str(e)}')
-        return render_template('index.html')
+        return render_template('index.html',
+                             stats=None,
+                             tabla=None,
+                             todos_mensajes=None,
+                             usuarios=[],
+                             cantidades=[])
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -422,101 +422,55 @@
     {% endwith %}
 
     <div id="estadisticas" class="section">
-        <div class="fechas-info">
-            <p>Desde: {{ fecha_inicio }}</p>
-            <p>Hasta: {{ fecha_fin }}</p>
-        </div>
-
         {% if stats %}
-        <div class="stats">
-            <div class="stat-card">
-                <span>Total de 💩</span>
-                <p>{{ stats.total_mierdas }}</p>
+            <h2>Estadísticas Generales</h2>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <h3>Total de 💩</h3>
+                    <p>{{ stats.total_mierdas }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Días analizados</h3>
+                    <p>{{ stats.dias }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Promedio diario</h3>
+                    <p>{{ stats.promedio }}</p>
+                </div>
             </div>
-            <div class="stat-card">
-                <span>Días analizados</span>
-                <p>{{ stats.dias }}</p>
-            </div>
-            <div class="stat-card">
-                <span>Promedio diario</span>
-                <p>{{ stats.promedio }}</p>
-            </div>
-            <div class="stat-card supremo">
-                <span>{{ "Cagador Supremo" if stats.cagadores_supremos|length == 1 else "Cagadores Supremos" }} 👑</span>
-                {% for cagador in stats.cagadores_supremos %}
-                    <p style="font-size: 1.4em; margin: 5px 0;">{{ cagador }}</p>
-                {% endfor %}
-                <span style="color: #8d6e63; font-weight: 500;">{{ stats.cantidad_suprema }} 💩</span>
-            </div>
-            <div class="stat-card estrenido">
-                <span>{{ "Estreñido Galáctico" if stats.estrenidos|length == 1 else "Estreñidos Galácticos" }} 🪨</span>
-                {% for estrenido in stats.estrenidos %}
-                    <p style="font-size: 1.4em; margin: 5px 0;">{{ estrenido }}</p>
-                {% endfor %}
-                <span style="color: #8d6e63; font-weight: 500;">{{ stats.cantidad_minima }} 💩</span>
-            </div>
-        </div>
 
-        {% if tabla %}
-        <div class="grafico-container">
-            <h2>Cantidad de 💩 totales por participante del {{ fecha_inicio }} al {{ fecha_fin }}</h2>
-            <canvas id="graficoMierdas"></canvas>
-        </div>
+            <div class="rankings">
+                <div class="ranking-box">
+                    <h3>🏆 Cagador Supremo</h3>
+                    <p>{{ stats.cagadores_supremos }}</p>
+                    <p>{{ stats.cantidad_suprema }} 💩</p>
+                </div>
+                <div class="ranking-box">
+                    <h3>🪨 Más Estreñido</h3>
+                    <p>{{ stats.estrenidos }}</p>
+                    <p>{{ stats.cantidad_minima }} 💩</p>
+                </div>
+            </div>
 
-        <div class="resultados-container">
-            <h2 class="resultados-titulo">Resultados detallados:</h2>
-            {{ tabla | safe }}
-        </div>
-        {% endif %}
+            {% if tabla %}
+                <div class="tabla-container">
+                    {{ tabla | safe }}
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="no-data">No hay datos disponibles. Por favor, sube un archivo.</p>
         {% endif %}
     </div>
 
     <div id="mensajes" class="section" style="display: none;">
-        <h2>Todos los Mensajes:</h2>
-        <div class="filtros">
-            <div class="filtro-grupo">
-                <label>Filtrar por tipo:</label>
-                <select id="filtroValidez" onchange="filtrarMensajes()">
-                    <option value="todos">Todos</option>
-                    <option value="validos">Solo válidos</option>
-                    <option value="invalidos">Solo no válidos</option>
-                </select>
-            </div>
-            
-            <div class="filtro-grupo">
-                <label>Filtrar por participante:</label>
-                <select id="filtroParticipante" onchange="filtrarMensajes()">
-                    <option value="todos">Todos</option>
-                    {% for usuario in usuarios %}
-                    <option value="{{ usuario }}">{{ usuario }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        
         {% if todos_mensajes %}
-        <table class="data">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Usuario</th>
-                    <th>Mensaje</th>
-                    <th>¿Válido?</th>
-                </tr>
-            </thead>
-            <tbody id="tablaMensajes">
+            <div class="mensajes-container">
                 {% for mensaje in todos_mensajes %}
-                <tr {% if mensaje.valido %}class="valido"{% endif %} 
-                    data-valido="{{ mensaje.valido|lower }}"
-                    data-usuario="{{ mensaje.usuario }}">
-                    <td>{{ mensaje.fecha }}</td>
-                    <td>{{ mensaje.usuario }}</td>
-                    <td>{{ mensaje.mensaje }}</td>
-                    <td>{{ "✅" if mensaje.valido else "❌" }}</td>
-                </tr>
+                    <div class="mensaje">{{ mensaje }}</div>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        {% else %}
+            <p class="no-data">No hay mensajes disponibles.</p>
         {% endif %}
     </div>
 
