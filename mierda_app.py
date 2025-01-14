@@ -19,48 +19,50 @@ db = client.mierda_app
 
 def procesar_archivo_chat(contenido):
     try:
-        # Debug: ver el contenido del archivo
-        print("Contenido del archivo:")
-        print(contenido[:500])
-        
-        # Dividir el contenido en líneas
+        print("Iniciando procesamiento del archivo...")
         lines = contenido.split('\n')
-        print(f"Número de líneas: {len(lines)}")
         
         # Inicializar variables
         usuarios_mierdas = {}
         todos_mensajes = []
+        dias_totales = len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido)))
+        print(f"Días totales encontrados: {dias_totales}")
         
-        # Nuevo patrón para el formato [dd/mm/yy, HH:MM:SS]
+        # Patrón para la fecha
         patron_fecha = r'\[\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2}\]'
         
         for line in lines:
             if '💩' in line:
-                print(f"\nLínea con 💩 encontrada: {line}")
-                
-                # Extraer fecha y usuario usando el nuevo formato
                 match_fecha = re.search(patron_fecha, line)
                 if match_fecha:
-                    # Separar por '] ' para obtener el resto del mensaje
                     partes = line.split('] ', 1)
                     if len(partes) > 1:
                         mensaje = partes[1]
-                        # Separar por ': ' para obtener el usuario
                         if ': ' in mensaje:
                             usuario = mensaje.split(': ', 1)[0].strip()
-                            print(f"Usuario encontrado: {usuario}")
-                            usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
+                            if usuario != '💩':
+                                usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
                             todos_mensajes.append(line)
         
         print(f"Usuarios encontrados: {usuarios_mierdas}")
         
-        # Crear DataFrame
+        # Crear DataFrame con promedios
         if usuarios_mierdas:
             df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
+            num_participantes = len(df)
+            
+            # Promedio diario individual
+            df['Promedio Diario'] = df['Cantidad'].apply(lambda x: round(x / dias_totales, 2))
+            
+            # Promedio diario general (total de 💩 / (días × participantes))
+            promedio_general = round(df['Cantidad'].sum() / (dias_totales * num_participantes), 2)
+            
             df = df.sort_values('Cantidad', ascending=False)
-            return df, todos_mensajes
+            tabla_html = df.to_html(classes='data', border=1, float_format=lambda x: '%.2f' % x)
+            
+            return df, todos_mensajes, tabla_html, promedio_general
         else:
-            raise ValueError("No se encontraron mensajes con 💩 en el formato esperado")
+            raise ValueError("No se encontraron mensajes válidos para procesar")
         
     except Exception as e:
         print(f"Error detallado en procesar_archivo_chat: {e}")
@@ -87,7 +89,7 @@ def upload_file():
         print(f"Archivo leído, tamaño: {len(contenido)} caracteres")
         
         # Procesar el archivo
-        df, todos_mensajes = procesar_archivo_chat(contenido)
+        df, todos_mensajes, tabla_html, promedio_general = procesar_archivo_chat(contenido)
         print("Archivo procesado exitosamente")
         
         if df.empty:
@@ -98,9 +100,10 @@ def upload_file():
             'fecha_actualizacion': datetime.now(),
             'total_mierdas': int(df['Cantidad'].sum()),
             'dias': len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido))),
-            'promedio': round(float(df['Cantidad'].mean()), 2),
+            'promedio': promedio_general,
             'datos_df': df.to_dict('records'),
             'mensajes': todos_mensajes,
+            'tabla_html': tabla_html,
             'contenido_original': contenido
         }
         
@@ -138,48 +141,25 @@ def upload_file():
 def index():
     try:
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
-        print("\n--- DEBUG INFO ---")
-        print("Stats from MongoDB:", stats is not None)
+        
         if stats:
-            print("Total mierdas:", stats.get('total_mierdas'))
-            print("Días:", stats.get('dias'))
-            print("Promedio:", stats.get('promedio'))
-            print("Datos DF:", len(stats.get('datos_df', [])))
-            print("Mensajes:", len(stats.get('mensajes', [])))
-        print("----------------\n")
-        
-        # Forzar recarga de datos de MongoDB
-        stats = db.estadisticas.find_one({'_id': 'stats_principales'})
-        print("Datos recuperados de MongoDB:", stats)  # Debug completo
-        
-        if stats and stats.get('datos_df'):
             df = pd.DataFrame(stats['datos_df'])
-            print("DataFrame creado:", df.shape)  # Debug
             
-            datos_stats = {
-                'total_mierdas': stats['total_mierdas'],
-                'dias': stats['dias'],
-                'promedio': stats['promedio'],
-                'cagadores_supremos': df.iloc[0]['Usuario'] if not df.empty else "N/A",
-                'cantidad_suprema': int(df.iloc[0]['Cantidad']) if not df.empty else 0,
-                'estrenidos': df.iloc[-1]['Usuario'] if not df.empty else "N/A",
-                'cantidad_minima': int(df.iloc[-1]['Cantidad']) if not df.empty else 0
-            }
-            
-            # Forzar respuesta sin caché
-            response = make_response(render_template('index.html',
-                                stats=datos_stats,
-                                tabla=df.to_html(classes='data', border=1),
-                                todos_mensajes=stats.get('mensajes', []),
+            return render_template('index.html',
+                                stats={
+                                    'total_mierdas': stats['total_mierdas'],
+                                    'dias': stats['dias'],
+                                    'promedio': stats['promedio'],
+                                    'cagadores_supremos': df.iloc[0]['Usuario'],
+                                    'cantidad_suprema': int(df.iloc[0]['Cantidad']),
+                                    'estrenidos': df.iloc[-1]['Usuario'],
+                                    'cantidad_minima': int(df.iloc[-1]['Cantidad'])
+                                },
+                                tabla=stats.get('tabla_html', ''),
+                                todos_mensajes=stats['mensajes'],
                                 usuarios=df['Usuario'].tolist(),
-                                cantidades=df['Cantidad'].tolist()))
-            
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-            return response
+                                cantidades=df['Cantidad'].tolist())
         else:
-            print("No se encontraron datos en MongoDB")
             return render_template('index.html', 
                                 stats=None,
                                 tabla=None,

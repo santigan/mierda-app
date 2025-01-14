@@ -5,22 +5,24 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
+    <!-- Header -->
+    <header class="app-header">
+        <h1>Bienvenido a la 💩app</h1>
+    </header>
+
     <!-- Botones de navegación -->
     <div class="nav-buttons">
         <button onclick="showSection('estadisticas')">Estadísticas</button>
         <button onclick="showSection('mensajes')">Mensajes</button>
     </div>
 
-    <!-- Botón de upload y recarga -->
+    <!-- Solo el botón de upload -->
     <div class="upload-section">
         <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
             <label for="file" class="upload-label">
                 <span class="upload-text">Actualizar chat 📤</span>
                 <input type="file" id="file" name="file" accept=".txt" onchange="this.form.submit()" style="display: none;">
             </label>
-        </form>
-        <form action="/" method="get" style="margin-top: 10px;">
-            <button type="submit" class="reload-button">Recargar datos 🔄</button>
         </form>
     </div>
 
@@ -229,6 +231,22 @@
 
         table.data tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: bold;
         }
     </style>
 
