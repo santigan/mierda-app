@@ -19,15 +19,6 @@
             <button onclick="showSection('mensajes')">Mensajes</button>
         </div>
 
-        <div class="upload-section">
-            <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
-                <label for="file" class="upload-label">
-                    <span class="upload-text">Actualizar chat 📤</span>
-                    <input type="file" id="file" name="file" accept=".txt" onchange="this.form.submit()" style="display: none;">
-                </label>
-            </form>
-        </div>
-
         <div id="estadisticas" class="section">
             {% if stats %}
                 <div class="stats-grid">
@@ -52,7 +43,7 @@
                         <p class="ranking-score">{{ stats.cantidad_suprema }} 💩</p>
                     </div>
                     <div class="ranking-card loser">
-                        <h3>🪨 Más Estreñido</h3>
+                        <h3>🪨 Estreñido Galáctico</h3>
                         <p class="ranking-name">{{ stats.estrenidos }}</p>
                         <p class="ranking-score">{{ stats.cantidad_minima }} 💩</p>
                     </div>
@@ -74,10 +65,24 @@
         </div>
 
         <div id="mensajes" class="section" style="display: none;">
+            <div class="upload-section">
+                <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+                    <label for="file" class="upload-label">
+                        <span class="upload-text">Actualizar chat 📤</span>
+                        <input type="file" id="file" name="file" accept=".txt" onchange="this.form.submit()" style="display: none;">
+                    </label>
+                </form>
+            </div>
+            
             {% if todos_mensajes %}
                 <div class="mensajes-container">
                     {% for mensaje in todos_mensajes %}
-                        <div class="mensaje-card">{{ mensaje }}</div>
+                        <div class="mensaje-card {% if not mensajes_validez[mensaje] %}invalid{% endif %}">
+                            {{ mensaje }}
+                            <span class="validez-badge {% if mensajes_validez[mensaje] %}valid{% else %}invalid{% endif %}">
+                                {{ '✓ Válido' if mensajes_validez[mensaje] else '✗ No válido' }}
+                            </span>
+                        </div>
                     {% endfor %}
                 </div>
             {% else %}
@@ -284,6 +289,33 @@
             padding: 1rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
+            position: relative;
+            padding-right: 100px;
+        }
+
+        .validez-badge {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .validez-badge.valid {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .validez-badge.invalid {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .mensaje-card.invalid {
+            opacity: 0.7;
+            background-color: #f5f5f5;
         }
 
         @media (max-width: 768px) {
@@ -311,6 +343,31 @@
                 padding: 0.5rem;
             }
         }
+
+        table.data td:first-child {
+            font-weight: bold;
+            text-align: center;
+            background-color: #f5f5f5;
+            width: 40px;
+        }
+        
+        /* Destacar el primer lugar */
+        table.data tr:first-child td:first-child {
+            background-color: #ffd700;
+            color: #000;
+        }
+        
+        /* Destacar el segundo lugar */
+        table.data tr:nth-child(2) td:first-child {
+            background-color: #c0c0c0;
+            color: #000;
+        }
+        
+        /* Destacar el tercer lugar */
+        table.data tr:nth-child(3) td:first-child {
+            background-color: #cd7f32;
+            color: #000;
+        }
     </style>
 
     <script>
@@ -336,13 +393,13 @@
                 }];
 
                 var layout = {
-                    title: 'Cantidad de 💩 por Usuario',
+                    title: 'Cantidad de 💩 por Participante',
                     titlefont: {
                         size: 24,
                         family: 'Poppins'
                     },
                     xaxis: {
-                        title: 'Usuario',
+                        title: 'Participante',
                         titlefont: {
                             size: 16,
                             family: 'Poppins'

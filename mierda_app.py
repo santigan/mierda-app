@@ -25,8 +25,8 @@ def procesar_archivo_chat(contenido):
         # Inicializar variables
         usuarios_mierdas = {}
         todos_mensajes = []
+        mensajes_validez = {}  # Nuevo diccionario para tracking
         dias_totales = len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido)))
-        print(f"Días totales encontrados: {dias_totales}")
         
         # Patrón para la fecha
         patron_fecha = r'\[\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2}\]'
@@ -40,27 +40,48 @@ def procesar_archivo_chat(contenido):
                         mensaje = partes[1]
                         if ': ' in mensaje:
                             usuario = mensaje.split(': ', 1)[0].strip()
-                            if usuario != '💩':
+                            # Validar si el mensaje cuenta para estadísticas
+                            es_valido = usuario != '💩'
+                            if es_valido:
                                 usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
                             todos_mensajes.append(line)
+                            mensajes_validez[line] = es_valido
         
-        print(f"Usuarios encontrados: {usuarios_mierdas}")
-        
-        # Crear DataFrame con promedios
+        # Crear DataFrame con promedios y validez
         if usuarios_mierdas:
             df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
-            num_participantes = len(df)
-            
-            # Promedio diario individual
             df['Promedio Diario'] = df['Cantidad'].apply(lambda x: round(x / dias_totales, 2))
+            df = df.sort_values('Cantidad', ascending=False)  # Ordenar por cantidad descendente
             
-            # Promedio diario general (total de 💩 / (días × participantes))
-            promedio_general = round(df['Cantidad'].sum() / (dias_totales * num_participantes), 2)
+            # Crear tabla HTML personalizada con numeración
+            tabla_html = """
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        <th>Cantidad</th>
+                        <th>Promedio Diario</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """
             
-            df = df.sort_values('Cantidad', ascending=False)
-            tabla_html = df.to_html(classes='data', border=1, float_format=lambda x: '%.2f' % x)
+            # Agregar filas con numeración
+            for index, row in df.iterrows():
+                posicion = df.index.get_loc(index) + 1  # Obtener la posición real (1-based)
+                tabla_html += f"""
+                    <tr>
+                        <td>{posicion}</td>
+                        <td>{row['Usuario']}</td>
+                        <td>{int(row['Cantidad'])}</td>
+                        <td>{row['Promedio Diario']:.2f}</td>
+                    </tr>
+                """
             
-            return df, todos_mensajes, tabla_html, promedio_general
+            tabla_html += "</tbody></table>"
+            
+            return df, todos_mensajes, tabla_html, mensajes_validez
         else:
             raise ValueError("No se encontraron mensajes válidos para procesar")
         
@@ -89,7 +110,7 @@ def upload_file():
         print(f"Archivo leído, tamaño: {len(contenido)} caracteres")
         
         # Procesar el archivo
-        df, todos_mensajes, tabla_html, promedio_general = procesar_archivo_chat(contenido)
+        df, todos_mensajes, tabla_html, mensajes_validez = procesar_archivo_chat(contenido)
         print("Archivo procesado exitosamente")
         
         if df.empty:
@@ -103,6 +124,7 @@ def upload_file():
             'promedio': promedio_general,
             'datos_df': df.to_dict('records'),
             'mensajes': todos_mensajes,
+            'mensajes_validez': mensajes_validez,  # Guardar la validez de los mensajes
             'tabla_html': tabla_html,
             'contenido_original': contenido
         }
@@ -146,17 +168,10 @@ def index():
             df = pd.DataFrame(stats['datos_df'])
             
             return render_template('index.html',
-                                stats={
-                                    'total_mierdas': stats['total_mierdas'],
-                                    'dias': stats['dias'],
-                                    'promedio': stats['promedio'],
-                                    'cagadores_supremos': df.iloc[0]['Usuario'],
-                                    'cantidad_suprema': int(df.iloc[0]['Cantidad']),
-                                    'estrenidos': df.iloc[-1]['Usuario'],
-                                    'cantidad_minima': int(df.iloc[-1]['Cantidad'])
-                                },
+                                stats=stats_data,
                                 tabla=stats.get('tabla_html', ''),
                                 todos_mensajes=stats['mensajes'],
+                                mensajes_validez=stats.get('mensajes_validez', {}),  # Pasar la validez al template
                                 usuarios=df['Usuario'].tolist(),
                                 cantidades=df['Cantidad'].tolist())
         else:
@@ -164,6 +179,7 @@ def index():
                                 stats=None,
                                 tabla=None,
                                 todos_mensajes=None,
+                                mensajes_validez={},
                                 usuarios=[],
                                 cantidades=[])
             
