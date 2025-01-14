@@ -74,20 +74,156 @@
                 </form>
             </div>
             
-            {% if todos_mensajes %}
-                <div class="mensajes-container">
-                    {% for mensaje in todos_mensajes %}
-                        <div class="mensaje-card {% if not mensajes_validez[mensaje] %}invalid{% endif %}">
-                            {{ mensaje }}
-                            <span class="validez-badge {% if mensajes_validez[mensaje] %}valid{% else %}invalid{% endif %}">
-                                {{ '✓ Válido' if mensajes_validez[mensaje] else '✗ No válido' }}
-                            </span>
-                        </div>
-                    {% endfor %}
+            <div class="filtros-container">
+                <div class="filtro-grupo">
+                    <label for="filtro-participante">Participante:</label>
+                    <select id="filtro-participante" onchange="aplicarFiltros()">
+                        <option value="">Todos</option>
+                        {% for usuario in usuarios %}
+                            <option value="{{ usuario }}">{{ usuario }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-            {% else %}
-                <p class="no-data">No hay mensajes disponibles.</p>
-            {% endif %}
+
+                <div class="filtro-grupo">
+                    <label for="filtro-validez">Validez:</label>
+                    <select id="filtro-validez" onchange="aplicarFiltros()">
+                        <option value="">Todos</option>
+                        <option value="valid">Válidos</option>
+                        <option value="invalid">No válidos</option>
+                    </select>
+                </div>
+
+                <div class="filtro-grupo">
+                    <label for="fecha-desde">Desde:</label>
+                    <input type="date" id="fecha-desde" onchange="aplicarFiltros()">
+                    <label for="fecha-hasta">Hasta:</label>
+                    <input type="date" id="fecha-hasta" onchange="aplicarFiltros()">
+                </div>
+            </div>
+
+            <div class="mensajes-container">
+                {% for mensaje in todos_mensajes %}
+                    <div class="mensaje-card {% if not mensajes_validez[mensaje] %}invalid{% endif %}"
+                         data-participante="{{ mensaje.split('] ')[1].split(':')[0].strip() }}"
+                         data-validez="{{ 'valid' if mensajes_validez[mensaje] else 'invalid' }}"
+                         data-fecha="{{ mensaje[1:17] }}">
+                        {{ mensaje }}
+                        <span class="validez-badge {% if mensajes_validez[mensaje] %}valid{% else %}invalid{% endif %}">
+                            {% if mensajes_validez[mensaje] %}
+                                ✓ Válido para estadísticas
+                            {% else %}
+                                ✗ No válido para estadísticas
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <style>
+                .filtros-container {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    margin-bottom: 20px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 20px;
+                }
+
+                .filtro-grupo {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .filtro-grupo label {
+                    font-weight: 500;
+                    color: #666;
+                }
+
+                .filtro-grupo select,
+                .filtro-grupo input {
+                    padding: 8px 12px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    color: #333;
+                }
+
+                .filtro-grupo select:focus,
+                .filtro-grupo input:focus {
+                    outline: none;
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 2px rgba(141, 110, 99, 0.2);
+                }
+
+                @media (max-width: 768px) {
+                    .filtros-container {
+                        flex-direction: column;
+                        gap: 15px;
+                    }
+
+                    .filtro-grupo {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+                }
+            </style>
+
+            <script>
+                function parseDate(dateStr) {
+                    // Convertir fecha del formato [dd/mm/yy, HH:MM:SS] a Date
+                    const [datePart] = dateStr.split(',');
+                    const [day, month, year] = datePart.split('/');
+                    return new Date(2000 + parseInt(year), month - 1, day);
+                }
+
+                function setDefaultDateRange() {
+                    const mensajes = document.querySelectorAll('.mensaje-card');
+                    if (mensajes.length > 0) {
+                        // Encontrar la fecha más reciente
+                        let maxDate = new Date(0);
+                        mensajes.forEach(mensaje => {
+                            const fecha = parseDate(mensaje.dataset.fecha);
+                            if (fecha > maxDate) maxDate = fecha;
+                        });
+
+                        // Calcular fecha 7 días antes
+                        const minDate = new Date(maxDate);
+                        minDate.setDate(minDate.getDate() - 7);
+
+                        // Formatear fechas para input type="date"
+                        document.getElementById('fecha-hasta').value = maxDate.toISOString().split('T')[0];
+                        document.getElementById('fecha-desde').value = minDate.toISOString().split('T')[0];
+                    }
+                }
+
+                function aplicarFiltros() {
+                    const participante = document.getElementById('filtro-participante').value;
+                    const validez = document.getElementById('filtro-validez').value;
+                    const fechaDesde = new Date(document.getElementById('fecha-desde').value);
+                    const fechaHasta = new Date(document.getElementById('fecha-hasta').value);
+
+                    document.querySelectorAll('.mensaje-card').forEach(mensaje => {
+                        const fechaMensaje = parseDate(mensaje.dataset.fecha);
+                        const cumpleFiltros = 
+                            (!participante || mensaje.dataset.participante === participante) &&
+                            (!validez || mensaje.dataset.validez === validez) &&
+                            (!isNaN(fechaDesde) && !isNaN(fechaHasta) && 
+                             fechaMensaje >= fechaDesde && fechaMensaje <= fechaHasta);
+
+                        mensaje.style.display = cumpleFiltros ? 'block' : 'none';
+                    });
+                }
+
+                // Establecer rango de fechas por defecto al cargar la página
+                document.addEventListener('DOMContentLoaded', function() {
+                    setDefaultDateRange();
+                    aplicarFiltros();
+                });
+            </script>
         </div>
     </div>
 
@@ -285,12 +421,17 @@
         }
 
         .mensaje-card {
-            background: var(--card-background);
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
             position: relative;
-            padding-right: 100px;
+            padding: 15px;
+            padding-right: 160px; /* Más espacio para el badge */
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .mensaje-card.invalid {
+            background-color: #f8f8f8;
         }
 
         .validez-badge {
@@ -298,9 +439,10 @@
             right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            padding: 4px 8px;
-            border-radius: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 0.8em;
+            font-weight: 500;
         }
 
         .validez-badge.valid {
@@ -311,11 +453,6 @@
         .validez-badge.invalid {
             background-color: #f44336;
             color: white;
-        }
-
-        .mensaje-card.invalid {
-            opacity: 0.7;
-            background-color: #f5f5f5;
         }
 
         @media (max-width: 768px) {

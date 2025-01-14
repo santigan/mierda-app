@@ -25,33 +25,36 @@ def procesar_archivo_chat(contenido):
         # Inicializar variables
         usuarios_mierdas = {}
         todos_mensajes = []
-        mensajes_validez = {}  # Nuevo diccionario para tracking
+        mensajes_validez = {}
         dias_totales = len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido)))
         
-        # Patrón para la fecha
+        # Patrón para la fecha y formato del mensaje
         patron_fecha = r'\[\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2}\]'
+        patron_mensaje = r'\[\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2}\]\s*(.*?):\s*(.*)$'
         
-        for line in lines:
-            if '💩' in line:
-                match_fecha = re.search(patron_fecha, line)
-                if match_fecha:
-                    partes = line.split('] ', 1)
-                    if len(partes) > 1:
-                        mensaje = partes[1]
-                        if ': ' in mensaje:
-                            usuario = mensaje.split(': ', 1)[0].strip()
-                            # Validar si el mensaje cuenta para estadísticas
-                            es_valido = usuario != '💩'
-                            if es_valido:
-                                usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
-                            todos_mensajes.append(line)
-                            mensajes_validez[line] = es_valido
+        for line in line_filter(lines):  # Filtrar líneas vacías
+            # Procesar cada línea que tenga formato de mensaje
+            match = re.match(patron_mensaje, line)
+            if match:
+                usuario = match.group(1).strip()
+                contenido_mensaje = match.group(2).strip()
+                
+                # Determinar si el mensaje es válido (solo contiene 💩)
+                es_valido = contenido_mensaje == '💩' and usuario != '💩'
+                
+                # Guardar el mensaje
+                todos_mensajes.append(line)
+                mensajes_validez[line] = es_valido
+                
+                # Actualizar estadísticas si es válido
+                if es_valido:
+                    usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
         
         # Crear DataFrame con promedios y validez
         if usuarios_mierdas:
             df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
             df['Promedio Diario'] = df['Cantidad'].apply(lambda x: round(x / dias_totales, 2))
-            df = df.sort_values('Cantidad', ascending=False)  # Ordenar por cantidad descendente
+            df = df.sort_values('Cantidad', ascending=False)
             
             # Crear tabla HTML personalizada con numeración
             tabla_html = """
@@ -67,9 +70,8 @@ def procesar_archivo_chat(contenido):
                 <tbody>
             """
             
-            # Agregar filas con numeración
             for index, row in df.iterrows():
-                posicion = df.index.get_loc(index) + 1  # Obtener la posición real (1-based)
+                posicion = df.index.get_loc(index) + 1
                 tabla_html += f"""
                     <tr>
                         <td>{posicion}</td>
@@ -88,6 +90,10 @@ def procesar_archivo_chat(contenido):
     except Exception as e:
         print(f"Error detallado en procesar_archivo_chat: {e}")
         raise
+
+def line_filter(lines):
+    """Filtra líneas vacías y asegura que sean mensajes válidos."""
+    return [line.strip() for line in lines if line.strip() and re.match(r'\[\d{1,2}/\d{1,2}/\d{2,4}', line)]
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
