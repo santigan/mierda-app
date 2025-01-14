@@ -163,15 +163,28 @@ def upload_file():
 def index():
     try:
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
+        print("\n--- DEBUG INFO ---")
+        print("Stats from MongoDB:", stats is not None)
         
         if stats:
             df = pd.DataFrame(stats['datos_df'])
+            
+            # Crear el diccionario de stats correctamente
+            stats_data = {
+                'total_mierdas': stats['total_mierdas'],
+                'dias': stats['dias'],
+                'promedio': stats['promedio'],
+                'cagadores_supremos': df.iloc[0]['Usuario'],
+                'cantidad_suprema': int(df.iloc[0]['Cantidad']),
+                'estrenidos': df.iloc[-1]['Usuario'],
+                'cantidad_minima': int(df.iloc[-1]['Cantidad'])
+            }
             
             return render_template('index.html',
                                 stats=stats_data,
                                 tabla=stats.get('tabla_html', ''),
                                 todos_mensajes=stats['mensajes'],
-                                mensajes_validez=stats.get('mensajes_validez', {}),  # Pasar la validez al template
+                                mensajes_validez=stats.get('mensajes_validez', {}),
                                 usuarios=df['Usuario'].tolist(),
                                 cantidades=df['Cantidad'].tolist())
         else:
@@ -188,7 +201,13 @@ def index():
         import traceback
         print(traceback.format_exc())
         flash(f'Error al cargar los datos: {str(e)}')
-        return render_template('index.html')
+        return render_template('index.html',
+                             stats=None,
+                             tabla=None,
+                             todos_mensajes=None,
+                             mensajes_validez={},
+                             usuarios=[],
+                             cantidades=[])
 
 if __name__ == '__main__':
     app.run(debug=True)
