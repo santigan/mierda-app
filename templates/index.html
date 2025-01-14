@@ -233,6 +233,131 @@
                 });
             </script>
         </div>
+
+        <div class="graficos-evolucion">
+            <div class="selector-vista">
+                <button onclick="mostrarEvolucion('diaria')" class="active">Vista Diaria</button>
+                <button onclick="mostrarEvolucion('semanal')">Vista Semanal</button>
+            </div>
+            <div id="grafico-evolucion"></div>
+        </div>
+
+        <style>
+            .graficos-evolucion {
+                margin-top: 30px;
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .selector-vista {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+
+            .selector-vista button {
+                padding: 8px 16px;
+                margin: 0 5px;
+                border: none;
+                border-radius: 20px;
+                background: #f0f0f0;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .selector-vista button.active {
+                background: var(--primary-color);
+                color: white;
+            }
+        </style>
+
+        <script>
+            // Colores para cada usuario
+            const colores = [
+                '#8d6e63', '#795548', '#6d4c41', '#5d4037', '#4e342e',
+                '#3e2723', '#a1887f', '#90a4ae', '#78909c', '#607d8b'
+            ];
+
+            function mostrarEvolucion(tipo) {
+                // Actualizar botones
+                document.querySelectorAll('.selector-vista button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // Preparar datos según el tipo
+                const datos = tipo === 'diaria' 
+                    ? {{ datos_evolucion_diaria | tojson }} 
+                    : {{ datos_evolucion_semanal | tojson }};
+
+                // Crear trazas para cada usuario
+                const traces = Object.entries(datos).map(([usuario, datos], index) => ({
+                    name: usuario,
+                    x: datos.map(d => tipo === 'diaria' ? d.fecha : d.semana),
+                    y: datos.map(d => d.cantidad),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: {
+                        color: colores[index % colores.length],
+                        width: 2
+                    },
+                    marker: {
+                        size: 6
+                    }
+                }));
+
+                const layout = {
+                    title: `Evolución ${tipo === 'diaria' ? 'Diaria' : 'Semanal'} Acumulada de 💩`,
+                    titlefont: {
+                        size: 24,
+                        family: 'Poppins'
+                    },
+                    xaxis: {
+                        title: tipo === 'diaria' ? 'Fecha' : 'Semana',
+                        titlefont: {
+                            size: 16,
+                            family: 'Poppins'
+                        },
+                        tickangle: -45,
+                        automargin: true
+                    },
+                    yaxis: {
+                        title: 'Cantidad Acumulada',
+                        titlefont: {
+                            size: 16,
+                            family: 'Poppins'
+                        }
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: {
+                        l: 50,
+                        r: 50,
+                        t: 80,
+                        b: 120
+                    },
+                    showlegend: true,
+                    legend: {
+                        orientation: 'h',
+                        yanchor: 'bottom',
+                        y: -0.5,
+                        xanchor: 'center',
+                        x: 0.5
+                    }
+                };
+
+                Plotly.newPlot('grafico-evolucion', traces, layout, {
+                    responsive: true,
+                    displayModeBar: false
+                });
+            }
+
+            // Mostrar vista diaria por defecto al cargar
+            document.addEventListener('DOMContentLoaded', function() {
+                mostrarEvolucion('diaria');
+            });
+        </script>
     </div>
 
     <style>
@@ -576,7 +701,9 @@
                         titlefont: {
                             size: 16,
                             family: 'Poppins'
-                        }
+                        },
+                        tickangle: -45,  // Rotar las etiquetas
+                        automargin: true  // Ajustar márgenes automáticamente
                     },
                     yaxis: {
                         title: 'Cantidad',
@@ -590,8 +717,8 @@
                     margin: {
                         l: 50,
                         r: 50,
-                        t: 50,
-                        b: 50
+                        t: 80,
+                        b: 120  // Aumentar el margen inferior
                     },
                     responsive: true
                 };
@@ -602,6 +729,11 @@
                 };
 
                 Plotly.newPlot('grafico', data, layout, config);
+
+                // Ajustar el gráfico cuando cambia el tamaño de la ventana
+                window.addEventListener('resize', function() {
+                    Plotly.Plots.resize('grafico');
+                });
             {% endif %}
         });
     </script>

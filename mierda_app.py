@@ -95,6 +95,58 @@ def line_filter(lines):
     """Filtra líneas vacías y asegura que sean mensajes válidos."""
     return [line.strip() for line in lines if line.strip() and re.match(r'\[\d{1,2}/\d{1,2}/\d{2,4}', line)]
 
+def procesar_datos_evolucion(mensajes, mensajes_validez):
+    # Crear diccionario para almacenar datos por usuario y fecha
+    datos_diarios = {}
+    datos_semanales = {}
+    
+    for mensaje in mensajes:
+        if mensajes_validez.get(mensaje, False):  # Solo mensajes válidos
+            match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2}),\s*\d{1,2}:\d{2}:\d{2}\]\s*(.*?):\s*💩', mensaje)
+            if match:
+                fecha_str = match.group(1)
+                usuario = match.group(2).strip()
+                
+                # Convertir fecha
+                fecha = datetime.strptime(fecha_str, '%d/%m/%y')
+                semana = fecha.strftime('%Y-%V')  # Año-NumeroSemana
+                
+                # Inicializar estructuras si no existen
+                if usuario not in datos_diarios:
+                    datos_diarios[usuario] = {}
+                if usuario not in datos_semanales:
+                    datos_semanales[usuario] = {}
+                
+                # Incrementar contadores
+                datos_diarios[usuario][fecha.strftime('%Y-%m-%d')] = datos_diarios[usuario].get(fecha.strftime('%Y-%m-%d'), 0) + 1
+                datos_semanales[usuario][semana] = datos_semanales[usuario].get(semana, 0) + 1
+    
+    # Convertir a formato acumulado
+    datos_acumulados_diarios = {}
+    datos_acumulados_semanales = {}
+    
+    for usuario in datos_diarios:
+        datos_acumulados_diarios[usuario] = []
+        acumulado = 0
+        for fecha in sorted(datos_diarios[usuario].keys()):
+            acumulado += datos_diarios[usuario][fecha]
+            datos_acumulados_diarios[usuario].append({
+                'fecha': fecha,
+                'cantidad': acumulado
+            })
+    
+    for usuario in datos_semanales:
+        datos_acumulados_semanales[usuario] = []
+        acumulado = 0
+        for semana in sorted(datos_semanales[usuario].keys()):
+            acumulado += datos_semanales[usuario][semana]
+            datos_acumulados_semanales[usuario].append({
+                'semana': semana,
+                'cantidad': acumulado
+            })
+    
+    return datos_acumulados_diarios, datos_acumulados_semanales
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -203,6 +255,12 @@ def index():
                 'cantidad_minima': int(df.iloc[-1]['Cantidad'])
             }
 
+            # Procesar datos para los gráficos de evolución
+            datos_diarios, datos_semanales = procesar_datos_evolucion(
+                stats['mensajes'], 
+                stats.get('mensajes_validez', {})
+            )
+            
             return render_template('index.html',
                                 stats=stats_data,
                                 tabla=stats.get('tabla_html', ''),
@@ -210,7 +268,9 @@ def index():
                                 mensajes_validez=stats.get('mensajes_validez', {}),
                                 usuarios=df['Usuario'].tolist(),
                                 cantidades=df['Cantidad'].tolist(),
-                                ultima_fecha=ultima_fecha or 'No disponible')
+                                ultima_fecha=ultima_fecha or 'No disponible',
+                                datos_evolucion_diaria=datos_diarios,
+                                datos_evolucion_semanal=datos_semanales)
         else:
             return render_template('index.html', 
                                 stats=None,
