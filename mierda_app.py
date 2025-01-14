@@ -37,16 +37,18 @@ def upload_file():
         return redirect(url_for('index'))
     
     try:
+        # Agregar print para debugging
+        print("Iniciando procesamiento del archivo...")
+        
         # Leer el contenido del archivo
         contenido = file.read()
+        print(f"Archivo leído, tamaño: {len(contenido)} bytes")
         
         # Procesar el archivo
         df, todos_mensajes = procesar_archivo_chat(contenido)
+        print("Archivo procesado exitosamente")
         
-        # Guardar el archivo en MongoDB
-        file_id = fs.put(contenido, filename='chat.txt')
-        
-        # Guardar los datos procesados
+        # Guardar en MongoDB
         stats_data = {
             'fecha_actualizacion': datetime.now(),
             'total_mierdas': int(df['Cantidad'].sum()),
@@ -62,12 +64,13 @@ def upload_file():
             {'$set': stats_data},
             upsert=True
         )
+        print("Datos guardados en MongoDB")
         
         flash('Archivo subido y procesado correctamente')
         
     except Exception as e:
-        flash(f'Error al procesar el archivo: {str(e)}')
         print(f"Error detallado: {e}")
+        flash(f'Error al procesar el archivo: {str(e)}')
     
     return redirect(url_for('index'))
 
