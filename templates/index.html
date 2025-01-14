@@ -2,441 +2,29 @@
 <html>
 <head>
     <title>Mierda App</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        /* Estilos base */
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Poppins', sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 2.5em;
-            margin: 30px 0;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        h2 {
-            text-align: center;
-            font-size: 1.5em;
-            margin: 30px 0;
-            padding: 20px 0;
-            font-weight: 500;
-            color: #34495e;
-        }
-
-        /* Cards y Contenedores */
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 25px;
-            transition: transform 0.2s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .fechas-info {
-            background: linear-gradient(135deg, #a1887f 0%, #8d6e63 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .fechas-info p {
-            margin: 8px 0;
-            font-weight: 400;
-            font-size: 1.1em;
-        }
-
-        /* Botones de navegación */
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 30px 0;
-            flex-wrap: wrap;
-        }
-
-        .nav-buttons button {
-            padding: 12px 25px;
-            cursor: pointer;
-            border: none;
-            border-radius: 25px;
-            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
-            color: white;
-            font-weight: 500;
-            font-size: 1em;
-            min-width: 160px;
-            transition: all 0.3s ease;
-        }
-
-        .nav-buttons button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Estadísticas */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin: 30px auto;
-            max-width: 1200px;
-            padding: 0 20px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-card.supremo,
-        .stat-card.estrenido {
-            grid-column: span 3;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            padding: 30px;
-        }
-
-        @media (min-width: 768px) {
-            .stat-card.supremo,
-            .stat-card.estrenido {
-                grid-column: span 1.5;
-            }
-            
-            .stat-card.supremo {
-                grid-column: 1 / span 1.5;
-            }
-            
-            .stat-card.estrenido {
-                grid-column: 2.5 / span 1.5;
-            }
-        }
-
-        .stat-card.supremo {
-            background: linear-gradient(135deg, #fff 0%, #fff8e1 100%);
-        }
-
-        .stat-card.estrenido {
-            background: linear-gradient(135deg, #fff 0%, #f5f5f5 100%);
-        }
-
-        .stat-card span:first-child {
-            font-size: 1em;
-            color: #666;
-            font-weight: 500;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .stat-card p {
-            font-size: 1.8em;
-            margin: 10px 0;
-            color: #6d4c41;
-            font-weight: 600;
-        }
-
-        .stat-card.supremo p,
-        .stat-card.estrenido p {
-            font-size: 1.4em;
-            margin: 5px 0;
-        }
-
-        /* Gráfico */
-        .grafico-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            margin: 40px auto;
-            width: 90%;
-            max-width: 1000px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .grafico-container h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        .grafico-container canvas {
-            width: 100% !important;
-            height: 400px !important;
-            margin-bottom: 20px;
-        }
-
-        /* Tabla */
-        table.data {
-            width: 70%;
-            max-width: 800px;
-            margin: 30px auto;
-            border-collapse: separate;
-            border-spacing: 0;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background: white;
-        }
-
-        table.data th {
-            background: #8d6e63;
-            color: white;
-            padding: 15px;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        table.data td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            color: #444;
-            text-align: center;
-        }
-
-        table.data tr:last-child td {
-            border-bottom: none;
-        }
-
-        table.data tr:hover td {
-            background-color: #f9f9f9;
-        }
-
-        /* Filtros */
-        .filtros {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px auto;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            max-width: 800px;
-        }
-
-        .filtro-grupo {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .filtro-grupo label {
-            font-weight: 500;
-            color: #666;
-        }
-
-        .filtro-grupo select {
-            padding: 10px 15px;
-            border-radius: 25px;
-            border: 1px solid #ddd;
-            background: #f8f9fa;
-            min-width: 200px;
-            font-family: 'Poppins', sans-serif;
-            cursor: pointer;
-        }
-
-        /* Utilidades */
-        .section {
-            opacity: 0;
-            display: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .section.active {
-            opacity: 1;
-            display: block;
-        }
-
-        tr.valido {
-            background-color: #f8f9fa;
-        }
-
-        /* Media Queries */
-        @media (max-width: 768px) {
-            body {
-                padding: 15px;
-            }
-
-            .stats {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                padding: 0 10px;
-            }
-
-            .filtros {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .filtro-grupo select {
-                width: 100%;
-            }
-
-            table.data {
-                width: 90%;
-            }
-            
-            .grafico-container {
-                padding: 20px;
-                width: 95%;
-            }
-
-            .grafico-container canvas {
-                height: 300px !important;
-            }
-
-            .stat-card {
-                padding: 20px 15px;
-            }
-
-            .stat-card.supremo,
-            .stat-card.estrenido {
-                grid-column: 1;
-                margin-top: 15px;
-                padding: 25px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .grafico-container {
-                padding: 15px;
-            }
-
-            .grafico-container canvas {
-                height: 250px !important;
-            }
-        }
-
-        .upload-section {
-            text-align: center;
-            margin: 20px 0;
-            padding: 10px;
-            display: block !important;
-        }
-
-        .upload-label {
-            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 1em;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-
-        .upload-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .upload-text {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .flash-messages {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .flash-message {
-            background: white;
-            border-left: 4px solid #8d6e63;
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .flash-message button {
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            font-size: 18px;
-            padding: 0 5px;
-        }
-
-        .flash-message button:hover {
-            color: #333;
-        }
-
-        .reload-button {
-            background: linear-gradient(135deg, #6d4c41 0%, #8d6e63 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            border: none;
-            font-weight: 500;
-            font-size: 1em;
-            margin-top: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .reload-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
+    <!-- Botones de navegación -->
     <div class="nav-buttons">
         <button onclick="showSection('estadisticas')">Estadísticas</button>
         <button onclick="showSection('mensajes')">Mensajes</button>
     </div>
 
-    <div class="upload-section" style="display: block !important;">
+    <!-- Botón de upload y recarga -->
+    <div class="upload-section">
         <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
             <label for="file" class="upload-label">
                 <span class="upload-text">Actualizar chat 📤</span>
                 <input type="file" id="file" name="file" accept=".txt" onchange="this.form.submit()" style="display: none;">
             </label>
         </form>
-    </div>
-
-    <div class="upload-section">
         <form action="/" method="get" style="margin-top: 10px;">
-            <button type="submit" class="reload-button">
-                Recargar datos 🔄
-            </button>
+            <button type="submit" class="reload-button">Recargar datos 🔄</button>
         </form>
     </div>
 
+    <!-- Mensajes de flash -->
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash-messages">
@@ -447,9 +35,9 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Sección de estadísticas -->
     <div id="estadisticas" class="section">
         {% if stats %}
-            <h2>Estadísticas Generales</h2>
             <div class="stats-container">
                 <div class="stat-box">
                     <h3>Total de 💩</h3>
@@ -461,7 +49,7 @@
                 </div>
                 <div class="stat-box">
                     <h3>Promedio diario</h3>
-                    <p>{{ stats.promedio }}</p>
+                    <p>{{ "%.2f"|format(stats.promedio) }}</p>
                 </div>
             </div>
 
@@ -483,11 +71,31 @@
                     {{ tabla | safe }}
                 </div>
             {% endif %}
+
+            {% if usuarios and cantidades %}
+                <div id="grafico"></div>
+                <script>
+                    var data = [{
+                        x: {{ usuarios | tojson }},
+                        y: {{ cantidades | tojson }},
+                        type: 'bar'
+                    }];
+
+                    var layout = {
+                        title: 'Cantidad de 💩 por Usuario',
+                        xaxis: { title: 'Usuario' },
+                        yaxis: { title: 'Cantidad' }
+                    };
+
+                    Plotly.newPlot('grafico', data, layout);
+                </script>
+            {% endif %}
         {% else %}
             <p class="no-data">No hay datos disponibles. Por favor, sube un archivo.</p>
         {% endif %}
     </div>
 
+    <!-- Sección de mensajes -->
     <div id="mensajes" class="section" style="display: none;">
         {% if todos_mensajes %}
             <div class="mensajes-container">
@@ -500,116 +108,141 @@
         {% endif %}
     </div>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .nav-buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .nav-buttons button {
+            background: #8d6e63;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .upload-label {
+            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .reload-button {
+            background: linear-gradient(135deg, #6d4c41 0%, #8d6e63 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            border: none;
+            margin-top: 10px;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .rankings {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .ranking-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .tabla-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .mensajes-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .mensaje {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+
+        table.data {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.data th, table.data td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        table.data th {
+            background-color: #8d6e63;
+            color: white;
+        }
+
+        table.data tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+
     <script>
         function showSection(sectionId) {
-            // Ocultar todas las secciones
             document.querySelectorAll('.section').forEach(section => {
                 section.style.display = 'none';
             });
-            
-            // Mostrar la sección seleccionada
             document.getElementById(sectionId).style.display = 'block';
         }
 
         // Mostrar estadísticas por defecto
         document.addEventListener('DOMContentLoaded', function() {
             showSection('estadisticas');
-        });
-
-        function filtrarMensajes() {
-            console.log('Función filtrarMensajes ejecutada'); // Debug
-            
-            const filtroValidez = document.getElementById('filtroValidez').value;
-            const filtroParticipante = document.getElementById('filtroParticipante').value;
-            
-            console.log('Filtro validez:', filtroValidez); // Debug
-            console.log('Filtro participante:', filtroParticipante); // Debug
-            
-            const filas = document.querySelectorAll('#tablaMensajes tr');
-            
-            filas.forEach(fila => {
-                const esValido = fila.getAttribute('data-valido') === 'true';
-                const usuario = fila.getAttribute('data-usuario');
-                
-                console.log('Fila:', { esValido, usuario }); // Debug
-                
-                let mostrarPorValidez = true;
-                let mostrarPorUsuario = true;
-                
-                // Filtrar por validez
-                if (filtroValidez === 'validos') {
-                    mostrarPorValidez = esValido;
-                } else if (filtroValidez === 'invalidos') {
-                    mostrarPorValidez = !esValido;
-                }
-                
-                // Filtrar por usuario
-                if (filtroParticipante !== 'todos') {
-                    mostrarPorUsuario = usuario === filtroParticipante;
-                }
-                
-                // Mostrar u ocultar fila
-                if (mostrarPorValidez && mostrarPorUsuario) {
-                    fila.style.display = '';
-                } else {
-                    fila.style.display = 'none';
-                }
-            });
-        }
-
-        // Asegurarse de que los filtros funcionen cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar los filtros
-            filtrarMensajes();
-            
-            // Agregar event listeners a los selectores
-            document.getElementById('filtroValidez').addEventListener('change', filtrarMensajes);
-            document.getElementById('filtroParticipante').addEventListener('change', filtrarMensajes);
-        });
-
-        {% if stats and tabla %}
-        const ctx = document.getElementById('graficoMierdas').getContext('2d');
-        const data = {
-            labels: {{ usuarios|tojson|safe }},
-            datasets: [{
-                label: 'Cantidad de 💩',
-                data: {{ cantidades|tojson|safe }},
-                backgroundColor: 'rgba(139, 69, 19, 0.6)',
-                borderColor: 'rgba(139, 69, 19, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    y: {
-                        display: false
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-        {% endif %}
-
-        // Asegurarse de que la sección de upload siempre esté visible
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.upload-section').style.display = 'block';
         });
     </script>
 </body>

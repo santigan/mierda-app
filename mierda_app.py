@@ -129,6 +129,17 @@ def upload_file():
 @app.route('/')
 def index():
     try:
+        stats = db.estadisticas.find_one({'_id': 'stats_principales'})
+        print("\n--- DEBUG INFO ---")
+        print("Stats from MongoDB:", stats is not None)
+        if stats:
+            print("Total mierdas:", stats.get('total_mierdas'))
+            print("Días:", stats.get('dias'))
+            print("Promedio:", stats.get('promedio'))
+            print("Datos DF:", len(stats.get('datos_df', [])))
+            print("Mensajes:", len(stats.get('mensajes', [])))
+        print("----------------\n")
+        
         # Forzar recarga de datos de MongoDB
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
         print("Datos recuperados de MongoDB:", stats)  # Debug completo
