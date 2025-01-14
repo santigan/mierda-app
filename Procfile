@@ -1,0 +1,1 @@
+web: gunicorn mierda_app:app
