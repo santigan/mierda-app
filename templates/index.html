@@ -336,6 +336,8 @@
         .upload-section {
             text-align: center;
             margin: 20px 0;
+            padding: 10px;
+            display: block !important;
         }
 
         .upload-label {
@@ -621,6 +623,11 @@
             }
         });
         {% endif %}
+
+        // Asegurarse de que la sección de upload siempre esté visible
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.upload-section').style.display = 'block';
+        });
     </script>
 </body>
 </html>
