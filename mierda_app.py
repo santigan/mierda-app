@@ -21,42 +21,46 @@ def procesar_archivo_chat(contenido):
     try:
         # Debug: ver el contenido del archivo
         print("Contenido del archivo:")
-        print(contenido[:500])  # Primeros 500 caracteres
+        print(contenido[:500])
         
         # Dividir el contenido en líneas
         lines = contenido.split('\n')
         print(f"Número de líneas: {len(lines)}")
         
         # Inicializar variables
-        mensajes = []
         usuarios_mierdas = {}
         todos_mensajes = []
         
-        # Patrones de fecha y mensaje
-        patron_fecha = r'\d{1,2}/\d{1,2}/\d{2,4}'
+        # Nuevo patrón para el formato [dd/mm/yy, HH:MM:SS]
+        patron_fecha = r'\[\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2}\]'
         
         for line in lines:
             if '💩' in line:
-                print(f"Línea con 💩 encontrada: {line}")  # Debug
-                # Extraer fecha y usuario
+                print(f"\nLínea con 💩 encontrada: {line}")
+                
+                # Extraer fecha y usuario usando el nuevo formato
                 match_fecha = re.search(patron_fecha, line)
                 if match_fecha:
-                    partes = line.split(' - ', 1)
+                    # Separar por '] ' para obtener el resto del mensaje
+                    partes = line.split('] ', 1)
                     if len(partes) > 1:
                         mensaje = partes[1]
-                        if ':' in mensaje:
-                            usuario = mensaje.split(':', 1)[0]
-                            print(f"Usuario encontrado: {usuario}")  # Debug
+                        # Separar por ': ' para obtener el usuario
+                        if ': ' in mensaje:
+                            usuario = mensaje.split(': ', 1)[0].strip()
+                            print(f"Usuario encontrado: {usuario}")
                             usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
                             todos_mensajes.append(line)
         
-        print(f"Usuarios encontrados: {usuarios_mierdas}")  # Debug
+        print(f"Usuarios encontrados: {usuarios_mierdas}")
         
         # Crear DataFrame
-        df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
-        df = df.sort_values('Cantidad', ascending=False)
-        
-        return df, todos_mensajes
+        if usuarios_mierdas:
+            df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
+            df = df.sort_values('Cantidad', ascending=False)
+            return df, todos_mensajes
+        else:
+            raise ValueError("No se encontraron mensajes con 💩 en el formato esperado")
         
     except Exception as e:
         print(f"Error detallado en procesar_archivo_chat: {e}")
