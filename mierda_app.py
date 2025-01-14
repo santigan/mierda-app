@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from datetime import datetime
 import pandas as pd
 from pymongo import MongoClient
@@ -113,6 +113,13 @@ def upload_file():
         print("Datos guardados en MongoDB")
         flash('Archivo subido y procesado correctamente')
         
+        # Forzar una recarga completa de la página
+        response = redirect(url_for('index'))
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+        
     except Exception as e:
         print(f"Error detallado: {e}")
         flash(f'Error al procesar el archivo: {str(e)}')
@@ -122,18 +129,14 @@ def upload_file():
 @app.route('/')
 def index():
     try:
-        # Obtener estadísticas de MongoDB
+        # Forzar recarga de datos de MongoDB
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
-        print("Datos recuperados de MongoDB:", stats is not None)  # Debug
+        print("Datos recuperados de MongoDB:", stats)  # Debug completo
         
-        if stats:
-            # Convertir datos a DataFrame
+        if stats and stats.get('datos_df'):
             df = pd.DataFrame(stats['datos_df'])
-            print("DataFrame creado con éxito")  # Debug
-            print("Columnas:", df.columns.tolist())  # Debug
-            print("Número de filas:", len(df))  # Debug
+            print("DataFrame creado:", df.shape)  # Debug
             
-            # Preparar datos para el template
             datos_stats = {
                 'total_mierdas': stats['total_mierdas'],
                 'dias': stats['dias'],
@@ -144,16 +147,20 @@ def index():
                 'cantidad_minima': int(df.iloc[-1]['Cantidad']) if not df.empty else 0
             }
             
-            print("Datos preparados para el template:", datos_stats)  # Debug
-            
-            return render_template('index.html',
+            # Forzar respuesta sin caché
+            response = make_response(render_template('index.html',
                                 stats=datos_stats,
-                                tabla=df.to_html(classes='data', border=1) if not df.empty else None,
+                                tabla=df.to_html(classes='data', border=1),
                                 todos_mensajes=stats.get('mensajes', []),
-                                usuarios=df['Usuario'].tolist() if not df.empty else [],
-                                cantidades=df['Cantidad'].tolist() if not df.empty else [])
+                                usuarios=df['Usuario'].tolist(),
+                                cantidades=df['Cantidad'].tolist()))
+            
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            return response
         else:
-            print("No se encontraron datos en MongoDB")  # Debug
+            print("No se encontraron datos en MongoDB")
             return render_template('index.html', 
                                 stats=None,
                                 tabla=None,
@@ -162,16 +169,11 @@ def index():
                                 cantidades=[])
             
     except Exception as e:
-        print(f"Error en index: {e}")  # Debug
+        print(f"Error en index: {e}")
         import traceback
-        print(traceback.format_exc())  # Debug detallado
+        print(traceback.format_exc())
         flash(f'Error al cargar los datos: {str(e)}')
-        return render_template('index.html',
-                             stats=None,
-                             tabla=None,
-                             todos_mensajes=None,
-                             usuarios=[],
-                             cantidades=[])
+        return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

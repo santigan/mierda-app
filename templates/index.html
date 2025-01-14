@@ -394,6 +394,24 @@
         .flash-message button:hover {
             color: #333;
         }
+
+        .reload-button {
+            background: linear-gradient(135deg, #6d4c41 0%, #8d6e63 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+            font-size: 1em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .reload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -408,6 +426,14 @@
                 <span class="upload-text">Actualizar chat 📤</span>
                 <input type="file" id="file" name="file" accept=".txt" onchange="this.form.submit()" style="display: none;">
             </label>
+        </form>
+    </div>
+
+    <div class="upload-section">
+        <form action="/" method="get" style="margin-top: 10px;">
+            <button type="submit" class="reload-button">
+                Recargar datos 🔄
+            </button>
         </form>
     </div>
 
