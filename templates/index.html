@@ -14,58 +14,15 @@
     </header>
 
     <div class="container">
-        <div class="nav-buttons">
-            <button onclick="showSection('estadisticas')">Estadísticas</button>
-            <button onclick="showSection('mensajes')">Mensajes</button>
-        </div>
-
+        <h1>Estadísticas de 💩</h1>
+        
         <div class="ultima-actualizacion">
             Última actualización: {{ ultima_fecha }}
         </div>
 
-        <div id="estadisticas" class="section">
-            {% if stats %}
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total de 💩</h3>
-                        <p class="stat-number">{{ stats.total_mierdas }}</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Días analizados</h3>
-                        <p class="stat-number">{{ stats.dias }}</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Promedio diario</h3>
-                        <p class="stat-number">{{ "%.2f"|format(stats.promedio) }}</p>
-                    </div>
-                </div>
-
-                <div class="rankings-grid">
-                    <div class="ranking-card winner">
-                        <h3>🏆 Cagador Supremo</h3>
-                        <p class="ranking-name">{{ stats.cagadores_supremos }}</p>
-                        <p class="ranking-score">{{ stats.cantidad_suprema }} 💩</p>
-                    </div>
-                    <div class="ranking-card loser">
-                        <h3>🪨 Estreñido Galáctico</h3>
-                        <p class="ranking-name">{{ stats.estrenidos }}</p>
-                        <p class="ranking-score">{{ stats.cantidad_minima }} 💩</p>
-                    </div>
-                </div>
-
-                {% if tabla %}
-                    <div class="data-section">
-                        <div class="chart-container">
-                            <div id="grafico"></div>
-                        </div>
-                        <div class="table-container">
-                            {{ tabla | safe }}
-                        </div>
-                    </div>
-                {% endif %}
-            {% else %}
-                <p class="no-data">No hay datos disponibles. Por favor, sube un archivo.</p>
-            {% endif %}
+        <div class="nav-buttons">
+            <button onclick="showSection('estadisticas')">Estadísticas</button>
+            <button onclick="showSection('mensajes')">Mensajes</button>
         </div>
 
         <div id="mensajes" class="section" style="display: none;">
@@ -270,6 +227,18 @@
                 background: var(--primary-color);
                 color: white;
             }
+
+            /* Asegurar que el contenedor del gráfico tenga suficiente espacio */
+            #grafico-evolucion {
+                min-height: 500px;
+                margin-bottom: 30px;
+            }
+
+            @media (max-width: 600px) {
+                #grafico-evolucion {
+                    min-height: 600px;  /* Más alto en móviles */
+                }
+            }
         </style>
 
         <script>
@@ -332,38 +301,55 @@
                             family: 'Poppins'
                         },
                         tickangle: tipo === 'semanal' ? 0 : -45,
-                        automargin: true
+                        automargin: true,
+                        tickfont: {
+                            size: 10  // Reducir tamaño de fuente en eje X
+                        }
                     },
                     yaxis: {
                         title: 'Cantidad Acumulada',
                         titlefont: {
                             size: 16,
                             family: 'Poppins'
-                        }
+                        },
+                        automargin: true
                     },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     margin: {
                         l: 50,
-                        r: 50,
+                        r: 20,
                         t: 80,
-                        b: 120
+                        b: 150  // Aumentar margen inferior
                     },
                     showlegend: true,
                     legend: {
                         orientation: 'h',
                         yanchor: 'bottom',
-                        y: -0.5,
+                        y: -0.7,  // Mover leyenda más abajo
                         xanchor: 'center',
                         x: 0.5
-                    }
+                    },
+                    // Hacer el gráfico más alto en móviles
+                    height: window.innerWidth < 600 ? 500 : 400
                 };
+
+                // Ajustar layout para móviles
+                if (window.innerWidth < 600) {
+                    layout.margin.b = 180;  // Más espacio en la parte inferior para móviles
+                    layout.legend.y = -0.9;  // Mover leyenda aún más abajo en móviles
+                }
 
                 Plotly.newPlot('grafico-evolucion', traces, layout, {
                     responsive: true,
                     displayModeBar: false
                 });
             }
+
+            // Agregar listener para redimensionar
+            window.addEventListener('resize', function() {
+                mostrarEvolucion(document.querySelector('.selector-vista button.active').textContent.toLowerCase().includes('diaria') ? 'diaria' : 'semanal');
+            });
 
             // Mostrar vista diaria por defecto al cargar
             document.addEventListener('DOMContentLoaded', function() {
@@ -672,10 +658,10 @@
         }
 
         .ultima-actualizacion {
-            text-align: right;
+            text-align: center;
             color: #666;
             font-size: 0.9em;
-            margin: 10px 0 20px;
+            margin: 15px 0;
             font-style: italic;
         }
 
@@ -687,6 +673,26 @@
         /* Si el valor es +0, lo mostramos en gris */
         .data td.ultima-semana:contains("+0") {
             color: #999;
+        }
+
+        .nav-buttons {
+            margin-top: 20px;
+        }
+
+        .upload-section {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .filtros-container {
+            margin-top: 80px;  /* Aumentado el espacio después del botón de Cargar Chat */
+        }
+
+        @media (max-width: 600px) {
+            .filtros-container {
+                margin-top: 70px;
+            }
         }
     </style>
 
