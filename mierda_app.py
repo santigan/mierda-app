@@ -19,8 +19,13 @@ db = client.mierda_app
 
 def procesar_archivo_chat(contenido):
     try:
+        # Debug: ver el contenido del archivo
+        print("Contenido del archivo:")
+        print(contenido[:500])  # Primeros 500 caracteres
+        
         # Dividir el contenido en líneas
         lines = contenido.split('\n')
+        print(f"Número de líneas: {len(lines)}")
         
         # Inicializar variables
         mensajes = []
@@ -29,21 +34,23 @@ def procesar_archivo_chat(contenido):
         
         # Patrones de fecha y mensaje
         patron_fecha = r'\d{1,2}/\d{1,2}/\d{2,4}'
-        patron_mensaje = r'.*💩.*'
         
         for line in lines:
             if '💩' in line:
+                print(f"Línea con 💩 encontrada: {line}")  # Debug
                 # Extraer fecha y usuario
                 match_fecha = re.search(patron_fecha, line)
                 if match_fecha:
                     partes = line.split(' - ', 1)
                     if len(partes) > 1:
                         mensaje = partes[1]
-                        usuario = mensaje.split(':', 1)[0] if ':' in mensaje else None
-                        
-                        if usuario:
+                        if ':' in mensaje:
+                            usuario = mensaje.split(':', 1)[0]
+                            print(f"Usuario encontrado: {usuario}")  # Debug
                             usuarios_mierdas[usuario] = usuarios_mierdas.get(usuario, 0) + 1
                             todos_mensajes.append(line)
+        
+        print(f"Usuarios encontrados: {usuarios_mierdas}")  # Debug
         
         # Crear DataFrame
         df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
@@ -52,7 +59,7 @@ def procesar_archivo_chat(contenido):
         return df, todos_mensajes
         
     except Exception as e:
-        print(f"Error en procesar_archivo_chat: {e}")
+        print(f"Error detallado en procesar_archivo_chat: {e}")
         raise
 
 @app.route('/upload', methods=['POST'])
