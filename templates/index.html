@@ -328,7 +328,15 @@
                             family: 'Poppins'
                         },
                         tickangle: -45,
-                        automargin: true
+                        automargin: true,
+                        // Asegurar que solo se muestren las fechas con datos
+                        tickmode: 'array',
+                        ticktext: tipo === 'diaria' 
+                            ? Object.values(datos)[0].map(d => d.fecha)
+                            : Object.values(datos)[0].map(d => d.semana),
+                        tickvals: tipo === 'diaria'
+                            ? Object.values(datos)[0].map(d => d.fecha)
+                            : Object.values(datos)[0].map(d => d.semana)
                     },
                     yaxis: {
                         title: 'Cantidad Acumulada',

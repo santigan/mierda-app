@@ -55,8 +55,8 @@ def procesar_archivo_chat(contenido):
             df = pd.DataFrame(list(usuarios_mierdas.items()), columns=['Usuario', 'Cantidad'])
             df['Promedio Diario'] = df['Cantidad'].apply(lambda x: round(x / dias_totales, 2))
             
-            # Calcular cantidad de la última semana
-            ultima_semana = {}
+            # Calcular cantidad de los últimos 5 días
+            ultimos_dias = {}
             ultima_fecha = None
             
             # Encontrar la fecha más reciente
@@ -68,10 +68,10 @@ def procesar_archivo_chat(contenido):
                         break
             
             if ultima_fecha:
-                # Calcular inicio de la última semana
-                inicio_ultima_semana = ultima_fecha - timedelta(days=7)
+                # Calcular inicio de los últimos 5 días
+                inicio_ultimos_dias = ultima_fecha - timedelta(days=5)
                 
-                # Contar mensajes de la última semana
+                # Contar mensajes de los últimos 5 días
                 for mensaje in todos_mensajes:
                     if mensajes_validez.get(mensaje, False):
                         match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2}).*?\]\s*(.*?):\s*💩', mensaje)
@@ -79,11 +79,11 @@ def procesar_archivo_chat(contenido):
                             fecha = datetime.strptime(match.group(1), '%d/%m/%y')
                             usuario = match.group(2).strip()
                             
-                            if fecha >= inicio_ultima_semana:
-                                ultima_semana[usuario] = ultima_semana.get(usuario, 0) + 1
+                            if fecha >= inicio_ultimos_dias:
+                                ultimos_dias[usuario] = ultimos_dias.get(usuario, 0) + 1
             
-            # Agregar columna de última semana al DataFrame
-            df['Ultima Semana'] = df['Usuario'].apply(lambda x: f"+{ultima_semana.get(x, 0)}")
+            # Agregar columna de últimos 5 días al DataFrame
+            df['Ultimos 5 dias'] = df['Usuario'].apply(lambda x: f"+{ultimos_dias.get(x, 0)}")
             
             df = df.sort_values('Cantidad', ascending=False)
             
@@ -96,7 +96,7 @@ def procesar_archivo_chat(contenido):
                         <th>Participante</th>
                         <th>Cantidad</th>
                         <th>Promedio Diario</th>
-                        <th>Última Semana</th>
+                        <th>Últimos 5 días</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,7 +110,7 @@ def procesar_archivo_chat(contenido):
                         <td>{row['Usuario']}</td>
                         <td>{int(row['Cantidad'])}</td>
                         <td>{row['Promedio Diario']:.2f}</td>
-                        <td class="ultima-semana">{row['Ultima Semana']}</td>
+                        <td class="ultima-semana">{row['Ultimos 5 dias']}</td>
                     </tr>
                 """
             
@@ -186,20 +186,22 @@ def procesar_datos_evolucion(mensajes, mensajes_validez):
                 'cantidad': acumulado
             })
     
-    # Procesar semanas solo entre la primera y última fecha real
-    semanas_completas = []
-    semana_actual = primera_fecha
-    while semana_actual <= ultima_fecha:
-        semanas_completas.append(semana_actual.strftime('%Y-%V'))
-        semana_actual += timedelta(days=7)
-    
+    # Procesar semanas correctamente
     for usuario in datos_semanales:
         datos_acumulados_semanales[usuario] = []
         acumulado = 0
-        for semana in semanas_completas:
-            acumulado += datos_semanales[usuario].get(semana, 0)
+        
+        # Ordenar las semanas cronológicamente
+        semanas_ordenadas = sorted(datos_semanales[usuario].keys())
+        
+        for semana in semanas_ordenadas:
+            acumulado += datos_semanales[usuario][semana]
+            # Convertir el formato de semana a una fecha legible
+            año, num_semana = semana.split('-')
+            # Crear una fecha para el lunes de esa semana
+            fecha_semana = datetime.strptime(f'{año}-W{num_semana}-1', '%Y-W%W-%w')
             datos_acumulados_semanales[usuario].append({
-                'semana': semana,
+                'semana': fecha_semana.strftime('%d/%m/%Y'),  # Formato más legible
                 'cantidad': acumulado
             })
     
