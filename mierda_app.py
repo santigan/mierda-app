@@ -79,6 +79,7 @@ def upload_file():
         return redirect(url_for('index'))
     
     try:
+        print("\n--- INICIO PROCESO DE UPLOAD ---")
         print("Iniciando procesamiento del archivo...")
         
         # Leer el contenido del archivo
@@ -92,28 +93,34 @@ def upload_file():
         if df.empty:
             raise ValueError("No se encontraron datos para procesar")
         
-        # Calcular estadísticas
+        # Preparar datos nuevos
         stats_data = {
             'fecha_actualizacion': datetime.now(),
             'total_mierdas': int(df['Cantidad'].sum()),
-            'dias': len(set(re.findall(r'\d{1,2}/\d{1,2}/\d{2,4}', contenido))),
+            'dias': len(set(re.findall(r'\[\d{1,2}/\d{1,2}/\d{2,4}', contenido))),
             'promedio': round(float(df['Cantidad'].mean()), 2),
             'datos_df': df.to_dict('records'),
             'mensajes': todos_mensajes,
             'contenido_original': contenido
         }
         
-        # Actualizar MongoDB
-        db.estadisticas.delete_one({'_id': 'stats_principales'})
-        db.estadisticas.insert_one({
+        print("Datos preparados para MongoDB")
+        
+        # Eliminar datos anteriores
+        result = db.estadisticas.delete_many({})
+        print(f"Registros anteriores eliminados: {result.deleted_count}")
+        
+        # Insertar nuevos datos
+        result = db.estadisticas.insert_one({
             '_id': 'stats_principales',
             **stats_data
         })
+        print(f"Nuevos datos insertados con ID: {result.inserted_id}")
         
-        print("Datos guardados en MongoDB")
+        print("--- FIN PROCESO DE UPLOAD ---\n")
         flash('Archivo subido y procesado correctamente')
         
-        # Forzar una recarga completa de la página
+        # Forzar recarga de la página sin caché
         response = redirect(url_for('index'))
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
@@ -121,10 +128,11 @@ def upload_file():
         return response
         
     except Exception as e:
-        print(f"Error detallado: {e}")
+        print(f"Error en upload: {e}")
+        import traceback
+        print(traceback.format_exc())
         flash(f'Error al procesar el archivo: {str(e)}')
-        
-    return redirect(url_for('index'))
+        return redirect(url_for('index'))
 
 @app.route('/')
 def index():
