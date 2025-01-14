@@ -174,30 +174,34 @@ def upload_file():
 def index():
     try:
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
-        print("\n--- DEBUG INFO ---")
-        print("Stats from MongoDB:", stats is not None)
         
         if stats:
             df = pd.DataFrame(stats['datos_df'])
             
-            # Crear el diccionario de stats correctamente
-            stats_data = {
-                'total_mierdas': stats['total_mierdas'],
-                'dias': stats['dias'],
-                'promedio': stats['promedio'],
-                'cagadores_supremos': df.iloc[0]['Usuario'],
-                'cantidad_suprema': int(df.iloc[0]['Cantidad']),
-                'estrenidos': df.iloc[-1]['Usuario'],
-                'cantidad_minima': int(df.iloc[-1]['Cantidad'])
-            }
-            
+            # Encontrar la fecha del último mensaje
+            ultima_fecha = None
+            if stats.get('mensajes'):
+                for mensaje in reversed(stats['mensajes']):
+                    # Extraer la fecha del formato [dd/mm/yy, HH:MM:SS]
+                    match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2})\]', mensaje)
+                    if match:
+                        fecha_str = match.group(1)
+                        # Convertir a formato más amigable
+                        try:
+                            fecha = datetime.strptime(fecha_str, '%d/%m/%y, %H:%M:%S')
+                            ultima_fecha = fecha.strftime('%d/%m/%Y %H:%M')
+                            break
+                        except ValueError:
+                            continue
+
             return render_template('index.html',
                                 stats=stats_data,
                                 tabla=stats.get('tabla_html', ''),
                                 todos_mensajes=stats['mensajes'],
                                 mensajes_validez=stats.get('mensajes_validez', {}),
                                 usuarios=df['Usuario'].tolist(),
-                                cantidades=df['Cantidad'].tolist())
+                                cantidades=df['Cantidad'].tolist(),
+                                ultima_fecha=ultima_fecha or 'No disponible')
         else:
             return render_template('index.html', 
                                 stats=None,
@@ -205,7 +209,8 @@ def index():
                                 todos_mensajes=None,
                                 mensajes_validez={},
                                 usuarios=[],
-                                cantidades=[])
+                                cantidades=[],
+                                ultima_fecha='No disponible')
             
     except Exception as e:
         print(f"Error en index: {e}")
@@ -213,12 +218,7 @@ def index():
         print(traceback.format_exc())
         flash(f'Error al cargar los datos: {str(e)}')
         return render_template('index.html',
-                             stats=None,
-                             tabla=None,
-                             todos_mensajes=None,
-                             mensajes_validez={},
-                             usuarios=[],
-                             cantidades=[])
+                             ultima_fecha='Error al cargar fecha')
 
 if __name__ == '__main__':
     app.run(debug=True)
