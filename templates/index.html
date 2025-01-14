@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>💩app</title>
+    <title>Mierda App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -397,20 +397,12 @@
     </style>
 </head>
 <body>
-    <h1>Bienvenido a la 💩app (v0.1)</h1>
-    
-    <div class="fechas-info">
-        <p>Desde: {{ fecha_inicio }}</p>
-        <p>Hasta: {{ fecha_fin }}</p>
-    </div>
-
-    {% if stats %}
     <div class="nav-buttons">
         <button onclick="showSection('estadisticas')">Estadísticas</button>
         <button onclick="showSection('mensajes')">Mensajes</button>
     </div>
 
-    <div class="upload-section">
+    <div class="upload-section" style="display: block !important;">
         <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
             <label for="file" class="upload-label">
                 <span class="upload-text">Actualizar chat 📤</span>
@@ -419,7 +411,23 @@
         </form>
     </div>
 
-    <div id="estadisticas" class="section active">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div id="estadisticas" class="section">
+        <div class="fechas-info">
+            <p>Desde: {{ fecha_inicio }}</p>
+            <p>Hasta: {{ fecha_fin }}</p>
+        </div>
+
+        {% if stats %}
         <div class="stats">
             <div class="stat-card">
                 <span>Total de 💩</span>
@@ -460,9 +468,10 @@
             {{ tabla | safe }}
         </div>
         {% endif %}
+        {% endif %}
     </div>
 
-    <div id="mensajes" class="section">
+    <div id="mensajes" class="section" style="display: none;">
         <h2>Todos los Mensajes:</h2>
         <div class="filtros">
             <div class="filtro-grupo">
@@ -510,28 +519,22 @@
         </table>
         {% endif %}
     </div>
-    {% endif %}
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for message in messages %}
-            <div class="flash-message">
-                {{ message }}
-                <button onclick="this.parentElement.remove()">×</button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
 
     <script>
         function showSection(sectionId) {
+            // Ocultar todas las secciones
             document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
+                section.style.display = 'none';
             });
-            document.getElementById(sectionId).classList.add('active');
+            
+            // Mostrar la sección seleccionada
+            document.getElementById(sectionId).style.display = 'block';
         }
+
+        // Mostrar estadísticas por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('estadisticas');
+        });
 
         function filtrarMensajes() {
             console.log('Función filtrarMensajes ejecutada'); // Debug
