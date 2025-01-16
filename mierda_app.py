@@ -291,73 +291,82 @@ def index():
     try:
         stats = db.estadisticas.find_one({'_id': 'stats_principales'})
         
-        if stats:
-            df = pd.DataFrame(stats['datos_df'])
-            
-            # Encontrar la fecha del último mensaje
-            ultima_fecha = None
-            if stats.get('mensajes'):
-                for mensaje in reversed(stats['mensajes']):
-                    match = re.search(r'\[(\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}:\d{2})\]', mensaje)
-                    if match:
-                        fecha_str = match.group(1)
-                        try:
-                            fecha = datetime.strptime(fecha_str, '%d/%m/%y, %H:%M:%S')
-                            ultima_fecha = fecha.strftime('%d/%m/%Y %H:%M')
-                            break
-                        except ValueError:
-                            continue
-
-            # Crear el diccionario de stats
-            stats_data = {
-                'total_mierdas': stats['total_mierdas'],
-                'dias': stats['dias'],
-                'promedio': stats['promedio'],
-                'cagadores_supremos': df.iloc[0]['Usuario'],
-                'cantidad_suprema': int(df.iloc[0]['Cantidad']),
-                'estrenidos': df.iloc[-1]['Usuario'],
-                'cantidad_minima': int(df.iloc[-1]['Cantidad'])
-            }
-
-            # Procesar datos para los gráficos de evolución
-            datos_diarios, datos_semanales = procesar_datos_evolucion(
-                stats['mensajes'], 
-                stats.get('mensajes_validez', {})
-            )
-            
+        if not stats or 'datos_df' not in stats:
             return render_template('index.html',
-                                stats=stats_data,
-                                tabla=stats.get('tabla_html', ''),
-                                todos_mensajes=stats['mensajes'],
-                                mensajes_validez=stats.get('mensajes_validez', {}),
-                                usuarios=df['Usuario'].tolist(),
-                                cantidades=df['Cantidad'].tolist(),
-                                ultima_fecha=ultima_fecha or 'No disponible',
-                                datos_evolucion_diaria=datos_diarios,
-                                datos_evolucion_semanal=datos_semanales)
-        else:
-            return render_template('index.html', 
-                                stats=None,
-                                tabla=None,
-                                todos_mensajes=None,
+                                stats={
+                                    'total_mierdas': 0,
+                                    'dias': 0,
+                                    'promedio': 0,
+                                    'cagadores_supremos': "No hay datos",
+                                    'cantidad_suprema': 0,
+                                    'estrenidos': "No hay datos",
+                                    'cantidad_minima': 0
+                                },
+                                tabla="<p>No hay datos disponibles</p>",
+                                todos_mensajes=[],
                                 mensajes_validez={},
                                 usuarios=[],
                                 cantidades=[],
-                                ultima_fecha='No disponible')
-            
+                                ultima_fecha='No disponible',
+                                datos_evolucion_diaria={},
+                                datos_evolucion_semanal={})
+        
+        df = pd.DataFrame(stats['datos_df'])
+        
+        if df.empty:
+            stats_data = {
+                'total_mierdas': 0,
+                'dias': 0,
+                'promedio': 0,
+                'cagadores_supremos': "No hay datos",
+                'cantidad_suprema': 0,
+                'estrenidos': "No hay datos",
+                'cantidad_minima': 0
+            }
+        else:
+            stats_data = {
+                'total_mierdas': stats.get('total_mierdas', 0),
+                'dias': stats.get('dias', 0),
+                'promedio': stats.get('promedio', 0),
+                'cagadores_supremos': df.iloc[0]['Usuario'] if len(df) > 0 else "No hay datos",
+                'cantidad_suprema': int(df.iloc[0]['Cantidad']) if len(df) > 0 else 0,
+                'estrenidos': df.iloc[-1]['Usuario'] if len(df) > 0 else "No hay datos",
+                'cantidad_minima': int(df.iloc[-1]['Cantidad']) if len(df) > 0 else 0
+            }
+        
+        return render_template('index.html',
+                            stats=stats_data,
+                            tabla=stats.get('tabla_html', ''),
+                            todos_mensajes=stats.get('mensajes', []),
+                            mensajes_validez=stats.get('mensajes_validez', {}),
+                            usuarios=df['Usuario'].tolist() if not df.empty else [],
+                            cantidades=df['Cantidad'].tolist() if not df.empty else [],
+                            ultima_fecha=stats.get('ultima_fecha', 'No disponible'),
+                            datos_evolucion_diaria={},
+                            datos_evolucion_semanal={})
+                            
     except Exception as e:
-        print(f"Error en index: {e}")
+        print(f"Error en index: {str(e)}")
         import traceback
         print(traceback.format_exc())
-        flash(f'Error al cargar los datos: {str(e)}')
         return render_template('index.html',
-                             stats=None,
-                             tabla=None,
-                             todos_mensajes=None,
-                             mensajes_validez={},
-                             usuarios=[],
-                             cantidades=[],
-                             ultima_fecha='Error al cargar fecha')
+                            stats={
+                                'total_mierdas': 0,
+                                'dias': 0,
+                                'promedio': 0,
+                                'cagadores_supremos': "Error",
+                                'cantidad_suprema': 0,
+                                'estrenidos': "Error",
+                                'cantidad_minima': 0
+                            },
+                            tabla="<p>Error al cargar los datos</p>",
+                            todos_mensajes=[],
+                            mensajes_validez={},
+                            usuarios=[],
+                            cantidades=[],
+                            ultima_fecha='No disponible',
+                            datos_evolucion_diaria={},
+                            datos_evolucion_semanal={})
 
 if __name__ == '__main__':
     app.run(debug=True)
